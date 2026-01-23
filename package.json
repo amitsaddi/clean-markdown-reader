@@ -1,0 +1,217 @@
+{
+  "name": "clean-markdown-reader",
+  "displayName": "Clean Markdown Reader",
+  "description": "Distraction-free markdown reading with file tree, syntax highlighting, and Mermaid diagrams",
+  "version": "1.9.0",
+  "publisher": "amitsaddi",
+  "icon": "resources/markdown-512px.png",
+  "engines": {
+    "vscode": "^1.108.0"
+  },
+  "categories": [
+    "Visualization",
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "clean-markdown-reader.open",
+        "title": "Clean Markdown Reader: Open Workspace",
+        "icon": "$(book)"
+      },
+      {
+        "command": "clean-markdown-reader.openFile",
+        "title": "Open in Clean Markdown Reader",
+        "icon": "$(book)"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "clean-markdown-reader.openFile",
+          "when": "resourceLangId == markdown",
+          "group": "navigation"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "command": "clean-markdown-reader.openFile",
+          "when": "resourceLangId == markdown",
+          "group": "navigation"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "clean-markdown-reader.openFile",
+          "when": "resourceLangId == markdown",
+          "group": "navigation"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "clean-markdown-reader",
+          "title": "Clean Markdown Reader",
+          "icon": "resources/icon-activitybar.svg"
+        }
+      ]
+    },
+    "views": {
+      "clean-markdown-reader": [
+        {
+          "type": "webview",
+          "id": "clean-markdown-reader.launcher",
+          "name": "Clean Markdown Reader"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Clean Markdown Reader",
+      "properties": {
+        "clean-markdown-reader.defaultPattern": {
+          "type": "string",
+          "default": "*.{md,markdown,mdown,mkd,mkdn,mdwn}",
+          "description": "Default glob pattern for filtering markdown files"
+        },
+        "clean-markdown-reader.panelWidth": {
+          "type": "number",
+          "default": 30,
+          "minimum": 10,
+          "maximum": 80,
+          "description": "Default width of the file tree panel (percentage)"
+        },
+        "clean-markdown-reader.rememberLastFolder": {
+          "type": "boolean",
+          "default": true,
+          "description": "Remember and reopen the last used folder"
+        },
+        "clean-markdown-reader.autoRefreshOnChange": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically refresh content when files change"
+        },
+        "clean-markdown-reader.defaultView": {
+          "type": "string",
+          "enum": [
+            "rendered",
+            "raw"
+          ],
+          "default": "rendered",
+          "description": "Default view mode for markdown content"
+        },
+        "clean-markdown-reader.syntaxHighlighting": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable syntax highlighting in code blocks"
+        },
+        "clean-markdown-reader.renderMermaid": {
+          "type": "boolean",
+          "default": true,
+          "description": "Render Mermaid diagrams"
+        },
+        "clean-markdown-reader.showLineNumbers": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show line numbers in code blocks"
+        },
+        "clean-markdown-reader.fontSize": {
+          "type": "number",
+          "default": 14,
+          "minimum": 8,
+          "maximum": 32,
+          "description": "Base font size for rendered content (pixels)"
+        },
+        "clean-markdown-reader.fontFamily": {
+          "type": "string",
+          "default": "Segoe UI, SF Pro Text, system-ui, sans-serif",
+          "description": "Font family for rendered markdown content"
+        },
+        "clean-markdown-reader.customCSS": {
+          "type": "string",
+          "default": "",
+          "editPresentation": "multilineText",
+          "markdownDescription": "Custom CSS to inject into the markdown reader. Applied after default styles.\n\n**Examples:**\n```css\n/* Change heading color */\n.markdown-content h1 { color: #ff6b6b; }\n\n/* Increase line height */\n.markdown-content { line-height: 1.8; }\n\n/* Custom code block style */\npre { border-radius: 8px; }\n```"
+        },
+        "clean-markdown-reader.showReadingProgress": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show reading progress indicator in status bar"
+        },
+        "clean-markdown-reader.readingSpeed": {
+          "type": "number",
+          "default": 200,
+          "minimum": 50,
+          "maximum": 1000,
+          "description": "Reading speed in words per minute (WPM) for reading time estimate"
+        },
+        "clean-markdown-reader.enableSourcePreview": {
+          "type": "boolean",
+          "default": false,
+          "description": "Show raw markdown source when hovering over rendered content"
+        },
+        "clean-markdown-reader.openInSeparateWindow": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically open the reader in a separate VS Code window"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts",
+    "lint:fix": "eslint src --ext ts --fix",
+    "test": "jest",
+    "test:coverage": "jest --coverage",
+    "type-check": "tsc --noEmit",
+    "esbuild-base": "node esbuild.js",
+    "esbuild": "npm run esbuild-base",
+    "esbuild-watch": "npm run esbuild-base -- --watch",
+    "esbuild-production": "npm run esbuild-base -- --production",
+    "vscode:prepublish": "npm run esbuild-production",
+    "package": "vsce package"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/amitsaddi/markdown-reader.git"
+  },
+  "keywords": [
+    "markdown",
+    "reader",
+    "preview",
+    "documentation"
+  ],
+  "author": "Amit Saddi",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/amitsaddi/markdown-reader/issues"
+  },
+  "homepage": "https://github.com/amitsaddi/markdown-reader#readme",
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "@types/jest": "^30.0.0",
+    "@types/markdown-it": "^14.1.2",
+    "@types/node": "^25.0.9",
+    "@types/vscode": "^1.108.1",
+    "@typescript-eslint/eslint-plugin": "^8.53.0",
+    "@typescript-eslint/parser": "^8.53.0",
+    "@vscode/test-electron": "^2.5.2",
+    "esbuild": "^0.27.2",
+    "eslint": "^9.39.2",
+    "jest": "^30.2.0",
+    "sharp": "^0.34.5",
+    "ts-jest": "^29.4.6",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.53.0"
+  },
+  "dependencies": {
+    "gray-matter": "^4.0.3",
+    "highlight.js": "^11.11.1",
+    "markdown-it": "^14.1.0",
+    "mermaid": "^10.9.5"
+  }
+}
