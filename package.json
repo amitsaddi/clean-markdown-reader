@@ -177,7 +177,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/amitsaddi/markdown-reader.git"
+    "url": "git+https://github.com/amitsaddi/clean-markdown-reader.git"
   },
   "keywords": [
     "markdown",
@@ -188,9 +188,9 @@
   "author": "Amit Saddi",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/amitsaddi/markdown-reader/issues"
+    "url": "https://github.com/amitsaddi/clean-markdown-reader/issues"
   },
-  "homepage": "https://github.com/amitsaddi/markdown-reader#readme",
+  "homepage": "https://github.com/amitsaddi/clean-markdown-reader#readme",
   "devDependencies": {
     "@eslint/js": "^9.39.2",
     "@types/jest": "^30.0.0",
