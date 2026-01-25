@@ -2,6 +2,11 @@
 
 All notable changes to Clean Markdown Reader will be documented in this file.
 
+## [1.11.0] - 2025-01-25
+
+### Added
+- **Open folder from context menu** - Right-click any folder in Explorer and choose "Open with Clean Markdown Reader" to open it directly
+
 ## [1.7.0] - 2025-01-19
 
 ### Added

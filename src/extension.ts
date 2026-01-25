@@ -36,6 +36,18 @@ export function activate(context: vscode.ExtensionContext): void {
     }
   );
 
+  // Register the open folder command (for folder context menu)
+  const openFolderCommand = vscode.commands.registerCommand(
+    'clean-markdown-reader.openFolder',
+    (uri: vscode.Uri) => {
+      MarkdownReaderPanel.createOrShow(
+        context.extensionUri,
+        uri,
+        context
+      );
+    }
+  );
+
   // Register the activity bar view provider
   const launcherProvider = new LauncherViewProvider(context.extensionUri, context);
   const viewProviderDisposable = vscode.window.registerWebviewViewProvider(
@@ -43,7 +55,7 @@ export function activate(context: vscode.ExtensionContext): void {
     launcherProvider
   );
 
-  context.subscriptions.push(openCommand, openFileCommand, viewProviderDisposable);
+  context.subscriptions.push(openCommand, openFileCommand, openFolderCommand, viewProviderDisposable);
 }
 
 /**

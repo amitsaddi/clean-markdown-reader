@@ -61,7 +61,7 @@ Prefer a dedicated window? Enable `openInSeparateWindow` in settings and the rea
 3. **Select** a folder with markdown files
 4. **Start reading**—click any file in the tree
 
-You can also right-click any `.md` file in Explorer and choose "Open in Clean Markdown Reader", or use the Command Palette.
+You can also right-click any `.md` file in Explorer and choose "Open in Clean Markdown Reader", right-click any folder and choose "Open with Clean Markdown Reader", or use the Command Palette.
 
 ---
 

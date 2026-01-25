@@ -25,6 +25,11 @@
         "command": "clean-markdown-reader.openFile",
         "title": "Open in Clean Markdown Reader",
         "icon": "$(book)"
+      },
+      {
+        "command": "clean-markdown-reader.openFolder",
+        "title": "Open with Clean Markdown Reader",
+        "icon": "$(book)"
       }
     ],
     "menus": {
@@ -46,6 +51,11 @@
         {
           "command": "clean-markdown-reader.openFile",
           "when": "resourceLangId == markdown",
+          "group": "navigation"
+        },
+        {
+          "command": "clean-markdown-reader.openFolder",
+          "when": "explorerResourceIsFolder",
           "group": "navigation"
         }
       ]
