@@ -24,7 +24,10 @@
       {
         "command": "clean-markdown-reader.openFile",
         "title": "Open in Clean Markdown Reader",
-        "icon": "$(book)"
+        "icon": {
+          "light": "resources/icon-activitybar.svg",
+          "dark": "resources/icon-activitybar.svg"
+        }
       },
       {
         "command": "clean-markdown-reader.openFolder",
@@ -33,6 +36,13 @@
       }
     ],
     "menus": {
+      "editor/title": [
+        {
+          "command": "clean-markdown-reader.openFile",
+          "when": "resourceLangId == markdown",
+          "group": "navigation"
+        }
+      ],
       "editor/context": [
         {
           "command": "clean-markdown-reader.openFile",

@@ -5,6 +5,7 @@ All notable changes to Clean Markdown Reader will be documented in this file.
 ## [1.11.0] - 2025-01-25
 
 ### Added
+- **Editor title bar icon** - Click the book icon in the editor title bar when viewing a markdown file to open it in Clean Markdown Reader (opens to the side)
 - **Open folder from context menu** - Right-click any folder in Explorer and choose "Open with Clean Markdown Reader" to open it directly
 
 ## [1.7.0] - 2025-01-19
