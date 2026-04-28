@@ -41,13 +41,21 @@ Three theme modes give you control: Auto follows your VS Code theme, or force Li
 Star files to bookmark them for quick access later. The extension tracks your last 10 viewed files and 10 opened folders automatically. Panel widths, zoom levels, and bookmarks persist across sessions.
 
 ### Markdown Rendering
-Full CommonMark support covers headers, lists, tables, blockquotes, and code blocks. Syntax highlighting handles 180+ languages through highlight.js. Mermaid diagrams render inline with their own zoom and copy controls. YAML front-matter gets parsed and displayed cleanly, and relative image paths resolve correctly.
+Full CommonMark support covers headers, lists, tables, blockquotes, and code blocks. Syntax highlighting handles 180+ languages through highlight.js. Mermaid diagrams render inline with their own zoom and copy controls. YAML front-matter gets parsed and displayed cleanly, and relative image paths resolve correctly. Math equations are fully supported via integrated KaTeX rendering. Wiki-style linking (`[[Page Title]]`) allows easy inter-document navigation.
+
+### Tag Filtering & Task Aggregation
+Organize your knowledge base effortlessly:
+- **Tag Filtering:** Extract tags from YAML frontmatter and filter your folder view using the tag dropdown.
+- **Tasks View:** View and navigate all `- [ ]` markdown checkboxes across your workspace in a dedicated VS Code Activity Bar view.
+
+### Export to PDF & HTML
+Export your rendered documents exactly how they appear in the reader. Print directly to PDF using your browser engine, or export to a standalone, bundled HTML file for sharing.
 
 ### Code Blocks
 Code blocks get syntax highlighting with auto-detection when you don't specify a language. Multi-line blocks show line numbers, and every block has a copy button for quick clipboard access.
 
-### Source Preview
-Curious what the raw markdown looks like? Enable source preview and hover over any rendered element to see the original markup with line numbers.
+### Source Preview & Scroll Sync
+Curious what the raw markdown looks like? Enable source preview and hover over any rendered element to see the original markup with line numbers. You can also `Alt+Click` any rendered paragraph or block to instantly open the source `.md` file in VS Code exactly at that line.
 
 ### Separate Window Mode
 Prefer a dedicated window? Enable `openInSeparateWindow` in settings and the reader opens in its own VS Code instance.

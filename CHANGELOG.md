@@ -2,6 +2,17 @@
 
 All notable changes to Clean Markdown Reader will be documented in this file.
 
+## [1.12.0] - 2026-04-28
+
+### Added
+- **Math equations (KaTeX)** - Inline (`$...$`) and block (`$$...$$`) math now render via `markdown-it-katex`. KaTeX CSS and fonts are bundled in `out/assets/katex/` for full offline support.
+- **Wiki-style links** - `[[Page Title]]` syntax renders as a clickable link. Clicking resolves the page name against the current folder tree (case-insensitive, ignoring `.md`/`.markdown`/etc. extensions) and navigates inside the reader.
+- **Tag filtering** - YAML front-matter `tags:` are extracted during folder scan and exposed as a dropdown beneath the file filter. Selecting a tag hides files that don't carry it; tag chips are shown next to file names in the tree.
+- **HTML export** - New "Export" toolbar button packages the rendered HTML into a standalone file via `vscode.window.showSaveDialog`.
+- **Print to PDF** - New "Print" toolbar button triggers `window.print()`. A `@media print` stylesheet hides the file tree, toolbar, status bar, and tooltips so the browser print dialog produces a clean, content-only PDF.
+- **Alt+Click / double-click → open source at line** - Block elements now carry `data-source-start` attributes. Alt+clicking (or double-clicking) any rendered block opens the underlying `.md` file in a side editor, scrolled to the matching line.
+- **Markdown Tasks tree view** - New activity-bar tree under the Clean Markdown Reader container that aggregates every `- [ ]` and `- [x]` checkbox across `**/*.md` in the workspace. Clicking a task jumps to the corresponding line in the source file.
+
 ## [1.11.0] - 2025-01-25
 
 ### Added

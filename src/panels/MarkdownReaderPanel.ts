@@ -3,6 +3,7 @@ import * as path from 'path';
 import MarkdownIt from 'markdown-it';
 import hljs from 'highlight.js';
 import matter from 'gray-matter';
+import mkdnKatex from 'markdown-it-katex';
 import { scanDirectory, TreeNode } from '../utils/fileScanner';
 import { LauncherViewProvider } from '../providers/LauncherViewProvider';
 
@@ -39,7 +40,7 @@ const md = new MarkdownIt({
       return ''; // Return empty string to use default escaping
     }
   },
-});
+}).use(mkdnKatex);
 
 /**
  * Markdown-it plugin to inject source line numbers into rendered HTML.
@@ -92,6 +93,46 @@ function applySourceLinePlugin(): void {
 
 // Apply source line mapping plugin
 applySourceLinePlugin();
+
+/**
+ * Markdown-it plugin for Wiki-style links [[Page Title]]
+ */
+function applyWikiLinksPlugin(): void {
+  // Add inline rule for [[...]]
+  md.inline.ruler.push('wiki_link', (state, silent) => {
+    const max = state.posMax;
+    const start = state.pos;
+    
+    // Check if it starts with [[
+    if (state.src.charCodeAt(start) !== 0x5b /* [ */ || 
+        start + 1 >= max || 
+        state.src.charCodeAt(start + 1) !== 0x5b /* [ */) {
+      return false;
+    }
+    
+    let pos = start + 2;
+    while (pos < max - 1) {
+      if (state.src.charCodeAt(pos) === 0x5d /* ] */ && state.src.charCodeAt(pos + 1) === 0x5d /* ] */) {
+        // Found end ]]
+        const pageTitle = state.src.slice(start + 2, pos).trim();
+        if (pageTitle.length > 0) {
+          if (!silent) {
+            const token = state.push('html_inline', '', 0);
+            token.content = `<a href="javascript:void(0)" class="wiki-link" data-target="${md.utils.escapeHtml(pageTitle)}">${md.utils.escapeHtml(pageTitle)}</a>`;
+          }
+          state.pos = pos + 2;
+          return true;
+        }
+      }
+      pos++;
+    }
+    
+    return false;
+  });
+}
+
+// Apply wiki links plugin
+applyWikiLinksPlugin();
 
 /**
  * Generates line numbers HTML for code blocks
@@ -207,6 +248,7 @@ interface InitMessage {
     selectedFile?: string;
     sourcePreview?: boolean;
     mermaidUri?: string;
+    katexUri?: string;
     config: ExtensionConfig;
   };
 }
@@ -342,7 +384,23 @@ interface SaveSourcePreviewMessage {
   };
 }
 
-type WebviewMessage = RequestFileMessage | FilterChangedMessage | OpenExternalMessage | SavePanelWidthMessage | SaveZoomLevelMessage | SaveWordWrapMessage | ToggleBookmarkMessage | ClearRecentFilesMessage | DeleteFileMessage | SaveThemeMessage | WebviewReadyMessage | SaveSourcePreviewMessage;
+interface ExportHtmlMessage {
+  type: 'exportHtml';
+  payload: {
+    html: string;
+    fileName: string;
+  };
+}
+
+interface OpenInEditorMessage {
+  type: 'openInEditor';
+  payload: {
+    path: string;
+    line: number;
+  };
+}
+
+type WebviewMessage = RequestFileMessage | FilterChangedMessage | OpenExternalMessage | SavePanelWidthMessage | SaveZoomLevelMessage | SaveWordWrapMessage | ToggleBookmarkMessage | ClearRecentFilesMessage | DeleteFileMessage | SaveThemeMessage | WebviewReadyMessage | SaveSourcePreviewMessage | ExportHtmlMessage | OpenInEditorMessage;
 
 /**
  * Storage keys for persistence
@@ -710,11 +768,17 @@ export class MarkdownReaderPanel {
       vscode.Uri.joinPath(this.extensionUri, 'out', 'assets', 'mermaid.min.js')
     );
 
+    // Get KaTeX CSS URI for offline support
+    const katexUri = this.panel.webview.asWebviewUri(
+      vscode.Uri.joinPath(this.extensionUri, 'out', 'assets', 'katex', 'katex.min.css')
+    );
+
     const payload: InitMessage['payload'] = {
       rootPath: this.folderUri.fsPath,
       tree,
       isEmptyFolder: tree.length === 0,
       mermaidUri: mermaidUri.toString(),
+      katexUri: katexUri.toString(),
       config,
     };
     if (savedWidth !== undefined) {
@@ -789,6 +853,12 @@ export class MarkdownReaderPanel {
             break;
           case 'saveSourcePreview':
             this.handleSaveSourcePreview(message.payload.enabled);
+            break;
+          case 'exportHtml':
+            void this.handleExportHtml(message.payload.html, message.payload.fileName);
+            break;
+          case 'openInEditor':
+            void this.handleOpenInEditor(message.payload.path, message.payload.line);
             break;
         }
       },
@@ -1346,6 +1416,56 @@ export class MarkdownReaderPanel {
   }
 
   /**
+   * Handles exporting HTML
+   */
+  private async handleExportHtml(htmlContent: string, fileName: string): Promise<void> {
+    const baseName = path.basename(fileName, path.extname(fileName)) + '.html';
+    const uri = await vscode.window.showSaveDialog({
+      defaultUri: vscode.Uri.file(path.join(this.folderUri.fsPath, baseName)),
+      filters: { 'HTML': ['html'] }
+    });
+
+    if (uri !== undefined) {
+      try {
+        const fullHtml = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>${baseName}</title>
+</head>
+<body style="font-family: system-ui, sans-serif; padding: 20px; max-width: 900px; margin: 0 auto;">
+  ${htmlContent}
+</body>
+</html>`;
+        await vscode.workspace.fs.writeFile(uri, Buffer.from(fullHtml, 'utf8'));
+        void vscode.window.showInformationMessage('Exported HTML successfully!');
+      } catch (err: unknown) {
+        void vscode.window.showErrorMessage('Failed to export HTML');
+      }
+    }
+  }
+
+  /**
+   * Handles opening a file in the editor synchronized with the scroll line
+   */
+  private async handleOpenInEditor(filePath: string, line: number): Promise<void> {
+    try {
+      const uri = vscode.Uri.file(filePath);
+      const doc = await vscode.workspace.openTextDocument(uri);
+      
+      // Select the specific line
+      const selection = new vscode.Range(line, 0, line, 0);
+      
+      await vscode.window.showTextDocument(doc, { 
+        selection, 
+        viewColumn: vscode.ViewColumn.Beside 
+      });
+    } catch (err: unknown) {
+      void vscode.window.showErrorMessage(`Failed to open file: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
+  /**
    * Returns the HTML content for the webview
    */
   private getHtmlContent(): string {
@@ -1355,6 +1475,9 @@ export class MarkdownReaderPanel {
     );
     const mainScriptUri = webview.asWebviewUri(
       vscode.Uri.joinPath(this.extensionUri, 'src', 'webview', 'main.js')
+    );
+    const katexUri = webview.asWebviewUri(
+      vscode.Uri.joinPath(this.extensionUri, 'out', 'assets', 'katex', 'katex.min.css')
     );
 
     const nonce = this.getNonce();
@@ -1368,18 +1491,24 @@ export class MarkdownReaderPanel {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}' ${cspSource} 'unsafe-eval'; img-src ${cspSource} https: data: blob:;">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${cspSource} 'unsafe-inline'; font-src ${cspSource} data:; script-src 'nonce-${nonce}' ${cspSource} 'unsafe-eval'; img-src ${cspSource} https: data: blob:;">
   <link href="${stylesUri.toString()}" rel="stylesheet">
+  <link href="${katexUri.toString()}" rel="stylesheet">
   <style>:root { --yamr-reader-font: ${config.fontFamily}; --yamr-reader-font-size: ${String(config.fontSize)}px; }</style>
   <style id="yamr-custom-css">${sanitizeCSS(config.customCSS)}</style>
   <title>Clean Markdown Reader</title>
 </head>
-<body>
+<body class="${config.defaultView === 'raw' ? 'raw-view-enabled' : ''}">
   <div class="container">
     <div class="left-panel">
       <div class="filter-box">
         <span class="filter-icon">🔍</span>
         <input type="text" id="filterInput" class="filter-input" value="${config.defaultPattern}" placeholder="${config.defaultPattern}">
+      </div>
+      <div class="filter-box" style="margin-top: 4px;">
+        <select id="tagSelect" class="filter-input" style="appearance: none; padding-left: 8px;">
+          <option value="">All Tags</option>
+        </select>
       </div>
       <div id="fileTree" class="file-tree"></div>
     </div>
@@ -1414,6 +1543,14 @@ export class MarkdownReaderPanel {
         <button class="toolbar-btn" id="sourcePreviewBtn" data-tooltip="Toggle source preview on hover">
           <span id="sourcePreviewIcon">👁️</span>
           <span id="sourcePreviewLabel">Source</span>
+        </button>
+        <button class="toolbar-btn" id="exportHtmlBtn" data-tooltip="Export as HTML">
+          <span id="exportHtmlIcon">💾</span>
+          <span id="exportHtmlLabel">Export</span>
+        </button>
+        <button class="toolbar-btn" id="printBtn" data-tooltip="Print / PDF">
+          <span id="printIcon">🖨️</span>
+          <span id="printLabel">Print</span>
         </button>
       </div>
       <div class="panels-container" id="panelsContainer">

@@ -21,7 +21,21 @@ function copyMermaidAsset() {
   // Copy mermaid.min.js
   fs.copyFileSync(srcPath, destPath);
   console.log('[assets] Copied mermaid.min.js to out/assets/');
+
+  // Copy KaTeX assets
+  const katexSrcDir = path.join(__dirname, 'node_modules', 'katex', 'dist');
+  const katexDestDir = path.join(__dirname, 'out', 'assets', 'katex');
+  
+  if (fs.existsSync(katexSrcDir)) {
+    if (!fs.existsSync(katexDestDir)) {
+      fs.mkdirSync(katexDestDir, { recursive: true });
+    }
+    // Simple recursive copy limited to css and fonts
+    fs.cpSync(katexSrcDir, katexDestDir, { recursive: true });
+    console.log('[assets] Copied KaTeX dist to out/assets/katex/');
+  }
 }
+
 
 async function main() {
   const ctx = await esbuild.context({

@@ -1398,6 +1398,54 @@ body.theme-dark .source-tooltip {
 }
 
 /* Theme adjustments */
+.tree-item-tags {
+  display: flex;
+  gap: 4px;
+  margin-left: 8px;
+  overflow: hidden;
+}
+
+.tree-item-tag {
+  font-size: 9px;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: var(--vscode-button-secondaryBackground, rgba(90, 93, 94, 0.4));
+  color: var(--vscode-descriptionForeground);
+  white-space: nowrap;
+}
+
 body.theme-dark .context-menu {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+}
+
+@media print {
+  .left-panel, .divider, .toolbar, .status-bar, .toc-panel, .source-tooltip {
+    display: none !important;
+  }
+  .right-panel {
+    width: 100% !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+  .container {
+    height: auto !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+  .render-panel {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    page-break-inside: avoid;
+  }
+  .panel-divider {
+    display: none !important;
+  }
+  body, html {
+    height: auto !important;
+    overflow: visible !important;
+    background: white !important;
+    color: black !important;
+  }
 }

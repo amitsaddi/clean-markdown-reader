@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import matter from 'gray-matter';
 import { matchesGlob } from './globMatcher';
 
 /**
@@ -9,6 +10,7 @@ export interface TreeNode {
   path: string;
   type: 'file' | 'folder';
   children?: TreeNode[];
+  tags?: string[];
 }
 
 /**
@@ -67,10 +69,25 @@ export async function scanDirectory(
       } else if (fileType === vscode.FileType.File) {
         // Apply glob pattern matching
         if (matchesGlob(name, pattern)) {
+          let tags: string[] | undefined;
+          try {
+            // Read file content to extract tags from frontmatter
+            const fileContent = await vscode.workspace.fs.readFile(entryUri);
+            const rawContent = new TextDecoder('utf-8').decode(fileContent);
+            // Read only frontmatter (gray-matter handles this efficiently enough for our needs)
+            const { data } = matter(rawContent);
+            if (data.tags) {
+              tags = Array.isArray(data.tags) ? data.tags.map(String) : [String(data.tags)];
+            }
+          } catch (e) {
+            // Ignore read errors
+          }
+
           result.push({
             name,
             path: entryUri.fsPath,
             type: 'file',
+            tags,
           });
         }
       }

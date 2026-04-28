@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { openWorkspace } from './commands/openWorkspace';
 import { LauncherViewProvider } from './providers/LauncherViewProvider';
+import { TasksViewProvider } from './providers/TasksViewProvider';
 import { MarkdownReaderPanel } from './panels/MarkdownReaderPanel';
 
 /**
@@ -55,7 +56,17 @@ export function activate(context: vscode.ExtensionContext): void {
     launcherProvider
   );
 
-  context.subscriptions.push(openCommand, openFileCommand, openFolderCommand, viewProviderDisposable);
+  // Register the tasks view provider
+  const workspaceRoot = vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0 
+		? vscode.workspace.workspaceFolders[0].uri.fsPath 
+		: undefined;
+  const tasksProvider = new TasksViewProvider(workspaceRoot);
+  const tasksViewDisposable = vscode.window.registerTreeDataProvider(
+    'clean-markdown-reader.tasks',
+    tasksProvider
+  );
+
+  context.subscriptions.push(openCommand, openFileCommand, openFolderCommand, viewProviderDisposable, tasksViewDisposable);
 }
 
 /**

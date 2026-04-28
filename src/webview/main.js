@@ -119,6 +119,7 @@
   const fileTreeEl = /** @type {HTMLElement} */ (document.getElementById('fileTree'));
   const statusBarEl = /** @type {HTMLElement} */ (document.getElementById('statusBar'));
   const filterInputEl = /** @type {HTMLInputElement} */ (document.getElementById('filterInput'));
+  const tagSelectEl = /** @type {HTMLSelectElement} */ (document.getElementById('tagSelect'));
   const dividerEl = /** @type {HTMLElement} */ (document.getElementById('divider'));
   const toolbarEl = /** @type {HTMLElement} */ (document.getElementById('toolbar'));
   const viewToggleBtnEl = /** @type {HTMLButtonElement} */ (document.getElementById('viewToggleBtn'));
@@ -159,6 +160,8 @@
   const sourceTooltipEl = /** @type {HTMLElement} */ (document.getElementById('sourceTooltip'));
   const tooltipLineRangeEl = /** @type {HTMLElement} */ (document.getElementById('tooltipLineRange'));
   const tooltipContentEl = /** @type {HTMLElement} */ (document.getElementById('tooltipContent'));
+  const exportHtmlBtnEl = /** @type {HTMLButtonElement} */ (document.getElementById('exportHtmlBtn'));
+  const printBtnEl = /** @type {HTMLButtonElement} */ (document.getElementById('printBtn'));
 
   // Context menu element
   const contextMenuEl = /** @type {HTMLElement} */ (document.getElementById('contextMenu'));
@@ -603,6 +606,37 @@
       return;
     }
 
+    // Extract unique tags and keep current selection
+    const uniqueTags = new Set();
+    function collectTags(nodes) {
+      for (const node of nodes) {
+        if (node.type === 'file' && node.tags) {
+          node.tags.forEach(t => uniqueTags.add(t));
+        } else if (node.type === 'folder' && node.children) {
+          collectTags(node.children);
+        }
+      }
+    }
+    collectTags(tree);
+    
+    // Update tag select dropdown
+    const currentTag = tagSelectEl.value;
+    while (tagSelectEl.options.length > 1) {
+      tagSelectEl.remove(1); // Keep 'All Tags' at index 0
+    }
+    const sortedTags = Array.from(uniqueTags).sort();
+    for (const tag of sortedTags) {
+      const opt = document.createElement('option');
+      opt.value = tag;
+      opt.textContent = tag;
+      tagSelectEl.appendChild(opt);
+    }
+    if (uniqueTags.has(currentTag)) {
+      tagSelectEl.value = currentTag;
+    } else {
+      tagSelectEl.value = '';
+    }
+
     const fragment = document.createDocumentFragment();
 
     // Render bookmarks section first
@@ -616,7 +650,40 @@
     }
 
     fileTreeEl.appendChild(fragment);
+    
+    // Apply current tag filter if active
+    updateTagFilter();
   }
+
+  function updateTagFilter() {
+    const selectedTag = tagSelectEl.value;
+    const files = fileTreeEl.querySelectorAll('.tree-file');
+    files.forEach(fileEl => {
+      // Don't filter bookmarks or recent files sections
+      if (fileEl.closest('.bookmarks-section') || fileEl.closest('.recent-files-section')) {
+        return;
+      }
+      const tags = fileEl.dataset.tags ? fileEl.dataset.tags.split(',') : [];
+      if (selectedTag === '' || tags.includes(selectedTag)) {
+        /** @type {HTMLElement} */ (fileEl).style.display = '';
+      } else {
+        /** @type {HTMLElement} */ (fileEl).style.display = 'none';
+      }
+    });
+
+    // Optionally hide empty folders? (can be complex, mostly visual)
+    const folders = fileTreeEl.querySelectorAll('.tree-folder');
+    Array.from(folders).reverse().forEach(folderEl => {
+      const visibleFiles = folderEl.querySelectorAll('.tree-file[style=""]');
+      if (selectedTag !== '' && visibleFiles.length === 0) {
+        /** @type {HTMLElement} */ (folderEl).style.display = 'none';
+      } else {
+        /** @type {HTMLElement} */ (folderEl).style.display = '';
+      }
+    });
+  }
+
+  tagSelectEl.addEventListener('change', updateTagFilter);
 
   /**
    * Render the bookmarks section into a fragment
@@ -908,6 +975,9 @@
     itemEl.className = 'tree-item tree-file';
     itemEl.style.paddingLeft = `${8 + depth * 16 + 14}px`;
     itemEl.dataset.path = node.path;
+    if (node.tags && node.tags.length > 0) {
+      itemEl.dataset.tags = node.tags.join(',');
+    }
     itemEl.title = node.path;
 
     const iconEl = document.createElement('span');
@@ -920,6 +990,19 @@
 
     itemEl.appendChild(iconEl);
     itemEl.appendChild(nameEl);
+
+    // Render tags if present
+    if (node.tags && node.tags.length > 0) {
+      const tagsEl = document.createElement('span');
+      tagsEl.className = 'tree-item-tags';
+      for (const tag of node.tags) {
+        const t = document.createElement('span');
+        t.className = 'tree-item-tag';
+        t.textContent = tag;
+        tagsEl.appendChild(t);
+      }
+      itemEl.appendChild(tagsEl);
+    }
 
     // Add bookmark button (not for items in bookmark section)
     if (!isBookmarkItem) {
@@ -1550,6 +1633,26 @@
   }
 
   /**
+   * Export the current rendered panel contents as HTML
+   */
+  function exportHtml() {
+    const panel = panels[activePanel];
+    if (panel.filePath && panel.htmlContent) {
+      postMessage('exportHtml', { 
+        html: panel.htmlContent, 
+        fileName: panel.filePath
+      });
+    }
+  }
+
+  /**
+   * Trigger print dialog for the current panel
+   */
+  function printPdf() {
+    window.print();
+  }
+
+  /**
    * Toggle TOC panel visibility
    */
   function toggleToc() {
@@ -2027,6 +2130,8 @@
 
   // Source preview button click handler
   sourcePreviewBtnEl.addEventListener('click', toggleSourcePreview);
+  exportHtmlBtnEl.addEventListener('click', exportHtml);
+  printBtnEl.addEventListener('click', printPdf);
 
   // Hover listeners for both panels
   renderPanel1El.addEventListener('mouseover', handleSourcePreviewMouseOver);
@@ -2802,6 +2907,72 @@
   // ============================================
   // WEBVIEW READY SIGNAL
   // ============================================
+
+  // Double click / Alt-click an element to open in editor
+  document.addEventListener('mousedown', (e) => {
+    // Only proceed on Alt+Click or Double Click
+    if (e.detail !== 2 && !e.altKey) {
+      return;
+    }
+
+    const target = /** @type {HTMLElement} */ (e.target);
+    const closestSourceEl = target.closest('[data-source-start]');
+    if (closestSourceEl) {
+      e.preventDefault();
+      const lineStart = parseInt(closestSourceEl.getAttribute('data-source-start') || '0', 10);
+      const panel = panels[activePanel];
+      if (panel.filePath) {
+        postMessage('openInEditor', {
+          path: panel.filePath,
+          line: lineStart
+        });
+      }
+    }
+  });
+
+  // Intercept clicks on wiki links
+  document.addEventListener('click', (e) => {
+    const target = /** @type {HTMLElement} */ (e.target);
+    const wikiLink = target.closest('.wiki-link');
+    if (wikiLink) {
+      e.preventDefault();
+      const pageTitle = wikiLink.getAttribute('data-target');
+      if (pageTitle) {
+        // Find best match in tree by file basename
+        const targetPath = findPageInTree(currentTree, pageTitle);
+        if (targetPath) {
+          requestFile(targetPath);
+          selectedFilePath = targetPath;
+        } else {
+          // If not found, maybe show an error in the status bar
+          statusTextEl.textContent = `Page "${pageTitle}" not found`;
+        }
+      }
+    }
+  });
+
+  /**
+   * Recursively search for a file in the tree that matches the page title
+   * @param {TreeNode[]} tree
+   * @param {string} title
+   * @returns {string|null}
+   */
+  function findPageInTree(tree, title) {
+    // Exact match first, disregarding extension
+    for (const node of tree) {
+      if (node.type === 'file') {
+        // Strip markdown extensions
+        const baseName = node.name.replace(/\.(md|markdown|mdown|mkd|mkdn|mdwn)$/i, '');
+        if (baseName.toLowerCase() === title.toLowerCase()) {
+          return node.path;
+        }
+      } else if (node.children) {
+        const result = findPageInTree(node.children, title);
+        if (result) return result;
+      }
+    }
+    return null;
+  }
 
   // Notify extension that webview is ready to receive messages
   postMessage('webviewReady', {});

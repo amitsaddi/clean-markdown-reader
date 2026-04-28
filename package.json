@@ -85,6 +85,11 @@
           "type": "webview",
           "id": "clean-markdown-reader.launcher",
           "name": "Clean Markdown Reader"
+        },
+        {
+          "id": "clean-markdown-reader.tasks",
+          "name": "Markdown Tasks",
+          "type": "tree"
         }
       ]
     },
@@ -231,7 +236,9 @@
   "dependencies": {
     "gray-matter": "^4.0.3",
     "highlight.js": "^11.11.1",
+    "katex": "^0.16.45",
     "markdown-it": "^14.1.0",
+    "markdown-it-katex": "^2.0.3",
     "mermaid": "^10.9.5"
   }
 }
