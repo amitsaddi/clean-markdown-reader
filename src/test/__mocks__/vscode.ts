@@ -31,6 +31,7 @@ export const window = {
   showWarningMessage: jest.fn(),
   createWebviewPanel: jest.fn(() => mockWebviewPanel),
   registerWebviewViewProvider: jest.fn(),
+  registerTreeDataProvider: jest.fn(),
 };
 
 export const commands = {
@@ -44,6 +45,7 @@ export const workspace = {
     readDirectory: jest.fn(),
     stat: jest.fn(),
   },
+  findFiles: jest.fn(),
   workspaceFolders: [],
 };
 
@@ -68,6 +70,64 @@ export enum FileType {
   File = 1,
   Directory = 2,
   SymbolicLink = 64,
+}
+
+export enum TreeItemCollapsibleState {
+  None = 0,
+  Collapsed = 1,
+  Expanded = 2,
+}
+
+export class TreeItem {
+  label: string | undefined;
+  collapsibleState: TreeItemCollapsibleState;
+  tooltip: string | undefined;
+  description: string | undefined;
+  iconPath: unknown;
+  command: unknown;
+
+  constructor(label: string, collapsibleState: TreeItemCollapsibleState = TreeItemCollapsibleState.None) {
+    this.label = label;
+    this.collapsibleState = collapsibleState;
+  }
+}
+
+export class ThemeIcon {
+  constructor(public readonly id: string, public readonly color?: ThemeColor) {}
+}
+
+export class ThemeColor {
+  constructor(public readonly id: string) {}
+}
+
+export class Range {
+  constructor(
+    public readonly startLine: number,
+    public readonly startCharacter: number,
+    public readonly endLine: number,
+    public readonly endCharacter: number
+  ) {}
+}
+
+export class EventEmitter<T> {
+  private listeners: ((e: T) => void)[] = [];
+
+  event = (listener: (e: T) => void): { dispose: () => void } => {
+    this.listeners.push(listener);
+    return {
+      dispose: () => {
+        this.listeners = this.listeners.filter((l) => l !== listener);
+      },
+    };
+  };
+
+  fire(data: T): void {
+    this.listeners.forEach((l) => { l(data); });
+  }
+
+  dispose(): void {
+    this.listeners = [];
+  }
 }
 
 export const ExtensionContext = jest.fn();

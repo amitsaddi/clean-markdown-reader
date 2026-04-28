@@ -2,12 +2,17 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 
 export class TasksViewProvider implements vscode.TreeDataProvider<TaskItem> {
-  private _onDidChangeTreeData: vscode.EventEmitter<TaskItem | undefined | null | void> = new vscode.EventEmitter<TaskItem | undefined | null | void>();
+  // The vscode.TreeDataProvider interface requires `void` in the union; the lint
+  // rule disallows void in unions, so we suppress it on these two declarations only.
+  // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
+  private readonly _onDidChangeTreeData: vscode.EventEmitter<TaskItem | undefined | null | void> = new vscode.EventEmitter<TaskItem | undefined | null | void>();
+  // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
   readonly onDidChangeTreeData: vscode.Event<TaskItem | undefined | null | void> = this._onDidChangeTreeData.event;
 
   private tasks: TaskItem[] = [];
+  private static readonly TASK_REGEX = /^\s*[-*+]\s+\[([ xX])\]\s+(.*)/;
 
-  constructor(private workspaceRoot: string | undefined) {}
+  constructor(private readonly workspaceRoot: string | undefined) {}
 
   refresh(): void {
     this._onDidChangeTreeData.fire();
@@ -18,24 +23,24 @@ export class TasksViewProvider implements vscode.TreeDataProvider<TaskItem> {
   }
 
   async getChildren(element?: TaskItem): Promise<TaskItem[]> {
-    if (!this.workspaceRoot) {
-      return Promise.resolve([]);
+    if (this.workspaceRoot === undefined || this.workspaceRoot === '') {
+      return [];
     }
 
-    if (element) {
-      // no children for now (flat list)
-      return Promise.resolve([]);
-    } else {
-      await this.scanForTasks();
-      return Promise.resolve(this.tasks);
+    if (element !== undefined) {
+      return [];
     }
+
+    await this.scanForTasks();
+    return this.tasks;
   }
 
-  private async scanForTasks() {
+  private async scanForTasks(): Promise<void> {
     this.tasks = [];
-    if (!this.workspaceRoot) return;
+    if (this.workspaceRoot === undefined || this.workspaceRoot === '') {
+      return;
+    }
 
-    // Use VS Code's findFiles to search for markdown files
     const mdFiles = await vscode.workspace.findFiles('**/*.md', '**/node_modules/**');
 
     for (const file of mdFiles) {
@@ -45,9 +50,8 @@ export class TasksViewProvider implements vscode.TreeDataProvider<TaskItem> {
         const lines = text.split('\n');
 
         lines.forEach((line, index) => {
-          // simple match for - [ ] or - [x]
-          const match = line.match(/^[\s]*[-*+]\s+\[([ xX])\]\s+(.*)/);
-          if (match) {
+          const match = TasksViewProvider.TASK_REGEX.exec(line);
+          if (match?.[1] !== undefined && match[2] !== undefined) {
             const isCompleted = match[1].toLowerCase() === 'x';
             const label = match[2].trim();
             const taskItem = new TaskItem(
@@ -60,7 +64,7 @@ export class TasksViewProvider implements vscode.TreeDataProvider<TaskItem> {
             this.tasks.push(taskItem);
           }
         });
-      } catch (err) {
+      } catch {
         // ignore errors reading specific files
       }
     }
@@ -77,8 +81,7 @@ class TaskItem extends vscode.TreeItem {
   ) {
     super(label, collapsibleState);
     
-    // Set tooltip and description
-    this.tooltip = `${this.label}`;
+    this.tooltip = label;
     this.description = path.basename(fileUri.fsPath);
     
     // Set icon based on completion status

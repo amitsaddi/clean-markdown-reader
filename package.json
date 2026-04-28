@@ -2,7 +2,7 @@
   "name": "clean-markdown-reader",
   "displayName": "Clean Markdown Reader",
   "description": "Distraction-free markdown reading with file tree, syntax highlighting, and Mermaid diagrams",
-  "version": "1.12.0",
+  "version": "1.13.0",
   "publisher": "amitsaddi",
   "icon": "resources/markdown-512px.png",
   "engines": {

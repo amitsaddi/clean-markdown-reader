@@ -180,7 +180,7 @@ md.renderer.rules.fence = (tokens, idx, options, env: RenderEnv, self): string =
 
   // Build source line attributes for hover preview feature
   const sourceAttrs = token.map !== null
-    ? ` data-source-start="${token.map[0]}" data-source-end="${token.map[1]}"`
+    ? ` data-source-start="${String(token.map[0])}" data-source-end="${String(token.map[1])}"`
     : '';
 
   if (info === 'mermaid') {
@@ -431,7 +431,7 @@ function sanitizeCSS(css: string): string {
   }
 
   // Normalize unicode escapes that could bypass filters (e.g., java\53cript → javascript)
-  const normalizedCSS = css.replace(/\\([0-9a-fA-F]{1,6})\s?/g, (_, hex) => {
+  const normalizedCSS = css.replace(/\\([0-9a-fA-F]{1,6})\s?/g, (_: string, hex: string) => {
     const charCode = parseInt(hex, 16);
     return String.fromCharCode(charCode);
   });
@@ -505,8 +505,6 @@ export class MarkdownReaderPanel {
   private folderWatcher: vscode.FileSystemWatcher | undefined;
   private folderWatcherDebounceTimer: NodeJS.Timeout | undefined;
   private disposables: vscode.Disposable[] = [];
-  private webviewReady = false;
-  private pendingInit = false;
 
   private constructor(
     panel: vscode.WebviewPanel,
@@ -543,7 +541,7 @@ export class MarkdownReaderPanel {
     // Update the launcher panel to show the new folder name and recent folders
     LauncherViewProvider.updateFolderDisplay(folderUri.fsPath);
 
-    void this.initializePanel();
+    // Init data is sent in response to the webview's `webviewReady` message.
   }
 
   /**
@@ -724,27 +722,18 @@ export class MarkdownReaderPanel {
   }
 
   /**
-   * Handles webview ready signal - sends init data when webview is ready
+   * Handles webview ready signal - sends init data when webview is ready.
+   *
+   * The webview can post `webviewReady` more than once for the same panel:
+   * VS Code reloads the webview HTML (and re-runs the script from scratch)
+   * when the editor is moved to another window via "Move Editor to New Window".
+   * The extension-side `MarkdownReaderPanel` instance survives that move, so
+   * we must treat every ready signal — not just the first — as a re-init.
+   * Otherwise the new window shows an empty file tree until the user types
+   * in the filter input (which is the only message that triggers a tree refresh).
    */
   private handleWebviewReady(): void {
-    this.webviewReady = true;
-    if (this.pendingInit) {
-      this.pendingInit = false;
-      void this.sendInitData();
-    }
-  }
-
-  /**
-   * Initializes the panel with folder contents
-   */
-  private async initializePanel(): Promise<void> {
-    if (this.webviewReady) {
-      // Webview already ready, send immediately
-      await this.sendInitData();
-    } else {
-      // Mark pending, will be sent when webview signals ready
-      this.pendingInit = true;
-    }
+    void this.sendInitData();
   }
 
   /**
@@ -802,8 +791,12 @@ export class MarkdownReaderPanel {
     if (recentFiles.length > 0) {
       payload.recentFiles = recentFiles;
     }
-    if (this.initialFile !== undefined) {
-      payload.selectedFile = this.initialFile;
+    // Prefer the currently-viewed file (set after a navigation) so a re-init
+    // — e.g. after the editor was moved to a new window — restores what the
+    // user was actually reading, not just whatever they opened the panel with.
+    const fileToSelect = this.currentFilePath ?? this.initialFile;
+    if (fileToSelect !== undefined) {
+      payload.selectedFile = fileToSelect;
     }
     this.postMessage({
       type: 'init',
@@ -1439,7 +1432,7 @@ export class MarkdownReaderPanel {
 </html>`;
         await vscode.workspace.fs.writeFile(uri, Buffer.from(fullHtml, 'utf8'));
         void vscode.window.showInformationMessage('Exported HTML successfully!');
-      } catch (err: unknown) {
+      } catch {
         void vscode.window.showErrorMessage('Failed to export HTML');
       }
     }

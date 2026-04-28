@@ -46,7 +46,7 @@ describe('Extension', () => {
     it('should add command and view provider to subscriptions', () => {
       activate(mockContext);
 
-      expect(mockContext.subscriptions.length).toBe(3);
+      expect(mockContext.subscriptions.length).toBe(5);
     });
   });
 

@@ -57,9 +57,7 @@ export function activate(context: vscode.ExtensionContext): void {
   );
 
   // Register the tasks view provider
-  const workspaceRoot = vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0 
-		? vscode.workspace.workspaceFolders[0].uri.fsPath 
-		: undefined;
+  const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
   const tasksProvider = new TasksViewProvider(workspaceRoot);
   const tasksViewDisposable = vscode.window.registerTreeDataProvider(
     'clean-markdown-reader.tasks',

@@ -75,20 +75,26 @@ export async function scanDirectory(
             const fileContent = await vscode.workspace.fs.readFile(entryUri);
             const rawContent = new TextDecoder('utf-8').decode(fileContent);
             // Read only frontmatter (gray-matter handles this efficiently enough for our needs)
-            const { data } = matter(rawContent);
-            if (data.tags) {
-              tags = Array.isArray(data.tags) ? data.tags.map(String) : [String(data.tags)];
+            const parsed: { data: Record<string, unknown> } = matter(rawContent);
+            const rawTags: unknown = parsed.data.tags;
+            if (Array.isArray(rawTags)) {
+              tags = rawTags.filter((t: unknown): t is string => typeof t === 'string');
+            } else if (typeof rawTags === 'string') {
+              tags = [rawTags];
             }
-          } catch (e) {
+          } catch {
             // Ignore read errors
           }
 
-          result.push({
+          const fileNode: TreeNode = {
             name,
             path: entryUri.fsPath,
             type: 'file',
-            tags,
-          });
+          };
+          if (tags !== undefined) {
+            fileNode.tags = tags;
+          }
+          result.push(fileNode);
         }
       }
     }
