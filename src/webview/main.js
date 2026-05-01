@@ -141,6 +141,7 @@
   const themeBtnEl = /** @type {HTMLButtonElement} */ (document.getElementById('themeBtn'));
   const themeIconEl = /** @type {HTMLElement} */ (document.getElementById('themeIcon'));
   const themeLabelEl = /** @type {HTMLElement} */ (document.getElementById('themeLabel'));
+  const toggleTreeBtnEl = /** @type {HTMLButtonElement} */ (document.getElementById('toggleTreeBtn'));
 
   // Split view elements
   const panelsContainerEl = /** @type {HTMLElement} */ (document.getElementById('panelsContainer'));
@@ -259,6 +260,15 @@
   function handleInit(payload) {
     rootPath = payload.rootPath;
     isEmptyFolder = payload.isEmptyFolder === true;
+
+    // Apply hideFileTree setting if provided
+    if (payload.hideFileTree === true) {
+      leftPanel.classList.add('hidden');
+      toggleTreeBtnEl.classList.remove('active');
+    } else {
+      leftPanel.classList.remove('hidden');
+      toggleTreeBtnEl.classList.add('active');
+    }
 
     // Apply saved panel width if available
     if (payload.panelWidth !== undefined && payload.panelWidth > 0) {
@@ -1822,6 +1832,25 @@
 
   // Theme button click handler
   themeBtnEl.addEventListener('click', cycleTheme);
+
+  // ============================================
+  // FILE TREE TOGGLE
+  // ============================================
+
+  /**
+   * Toggle file tree visibility
+   */
+  function toggleFileTree() {
+    leftPanel.classList.toggle('hidden');
+    if (leftPanel.classList.contains('hidden')) {
+      toggleTreeBtnEl.classList.remove('active');
+    } else {
+      toggleTreeBtnEl.classList.add('active');
+    }
+  }
+
+  // Toggle tree button click handler
+  toggleTreeBtnEl.addEventListener('click', toggleFileTree);
 
   // ============================================
   // SPLIT VIEW

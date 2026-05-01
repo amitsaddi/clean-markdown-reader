@@ -65,11 +65,11 @@ Prefer a dedicated window? Enable `openInSeparateWindow` in settings and the rea
 ## Quick Start
 
 1. **Install** from the VS Code Marketplace
-2. **Click** the book icon in the Activity Bar
+2. **Click** the Clean Markdown Reader icon (M with down arrow) in the Activity Bar
 3. **Select** a folder with markdown files
 4. **Start reading**—click any file in the tree
 
-You can also click the book icon in the editor title bar when viewing a markdown file, right-click any `.md` file in Explorer and choose "Open in Clean Markdown Reader", right-click any folder and choose "Open with Clean Markdown Reader", or use the Command Palette.
+You can also click the Clean Markdown Reader icon (M with down arrow) in the editor title bar when viewing a markdown file, right-click any `.md` file in Explorer and choose "Open in Clean Markdown Reader", right-click any folder and choose "Open with Clean Markdown Reader", or use the Command Palette.
 
 ---
 

@@ -37,7 +37,6 @@ html, body {
   width: 100%;
 }
 
-/* Left panel - file tree */
 .left-panel {
   width: 30%;
   min-width: 200px;
@@ -45,6 +44,10 @@ html, body {
   flex-direction: column;
   border-right: 1px solid var(--yamr-border);
   overflow: hidden;
+}
+
+.left-panel.hidden {
+  display: none !important;
 }
 
 /* Filter box */

@@ -27,12 +27,13 @@ export function activate(context: vscode.ExtensionContext): void {
       const folderPath = path.dirname(uri.fsPath);
       const folderUri = vscode.Uri.file(folderPath);
 
-      // Open the panel with the folder and auto-select the file
+      // Open the panel with the folder and auto-select the file, in a side panel
       MarkdownReaderPanel.createOrShow(
         context.extensionUri,
         folderUri,
         context,
-        uri.fsPath
+        uri.fsPath,
+        true // openBeside
       );
     }
   );

@@ -249,6 +249,7 @@ interface InitMessage {
     sourcePreview?: boolean;
     mermaidUri?: string;
     katexUri?: string;
+    hideFileTree?: boolean;
     config: ExtensionConfig;
   };
 }
@@ -505,6 +506,7 @@ export class MarkdownReaderPanel {
   private folderWatcher: vscode.FileSystemWatcher | undefined;
   private folderWatcherDebounceTimer: NodeJS.Timeout | undefined;
   private disposables: vscode.Disposable[] = [];
+  public hideFileTreeOnNextInit = false;
 
   private constructor(
     panel: vscode.WebviewPanel,
@@ -669,13 +671,14 @@ export class MarkdownReaderPanel {
     extensionUri: vscode.Uri,
     folderUri: vscode.Uri,
     context?: vscode.ExtensionContext,
-    initialFile?: string
+    initialFile?: string,
+    openBeside?: boolean
   ): void {
     if (context !== undefined) {
       MarkdownReaderPanel.setContext(context);
     }
 
-    const column = vscode.ViewColumn.One;
+    const column = openBeside === true ? vscode.ViewColumn.Beside : vscode.ViewColumn.One;
 
     if (MarkdownReaderPanel.currentPanel !== undefined) {
       // Check if folder is different - if so, dispose and recreate
@@ -712,6 +715,11 @@ export class MarkdownReaderPanel {
       folderUri,
       initialFile
     );
+
+    // Save openBeside flag for init payload
+    if (openBeside === true) {
+      MarkdownReaderPanel.currentPanel.hideFileTreeOnNextInit = true;
+    }
 
     // Move to separate window if setting is enabled
     const config = vscode.workspace.getConfiguration('clean-markdown-reader');
@@ -768,8 +776,12 @@ export class MarkdownReaderPanel {
       isEmptyFolder: tree.length === 0,
       mermaidUri: mermaidUri.toString(),
       katexUri: katexUri.toString(),
+      hideFileTree: this.hideFileTreeOnNextInit,
       config,
     };
+    // Reset the flag so it only applies on first init
+    this.hideFileTreeOnNextInit = false;
+
     if (savedWidth !== undefined) {
       payload.panelWidth = savedWidth;
     }
@@ -1508,6 +1520,10 @@ export class MarkdownReaderPanel {
     <div class="divider" id="divider"></div>
     <div class="right-panel">
       <div class="toolbar" id="toolbar">
+        <button class="toolbar-btn" id="toggleTreeBtn" data-tooltip="Toggle File Tree">
+          <span id="fileTreeIcon">📁</span>
+          <span id="fileTreeLabel">Tree</span>
+        </button>
         <div class="zoom-controls" id="zoomControls">
           <button class="toolbar-btn zoom-btn" id="zoomOutBtn" data-tooltip="Zoom out (Ctrl+-)">−</button>
           <span class="zoom-level" id="zoomLevel">100%</span>
